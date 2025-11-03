@@ -1,5 +1,5 @@
 import java.util.Scanner; // Import the Scanner class for user input
-
+// This is a test comment
 public class Main {
     public static void main(String[] args) {
         Board board = new Board(10, new Location(0, 0));
