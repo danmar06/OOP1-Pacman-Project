@@ -44,9 +44,12 @@ public class Main {
                     level++;
                     break; // break inner loop to start next level
                 }
+                if (board.isGameOver()) {
+                    System.out.println("Game over.");
+                    break;
+                }
             }
             if (board.isGameOver()) {
-                System.out.println("Game over.");
                 break;
             }
         }
