@@ -1,13 +1,14 @@
 import java.util.Random; // Import Random class for generating random numbers
 
 public class Board {  
-    private final char[][] board; // 2D array to represent the game board
-    private Location pacman; // Current location of Pacman
-    private final int size; // Size of the board 
-    private int score; // Player's score
     private int pelletCount; // Number of pellets on the board
-    private int level; // Current level of the game
-
+    private final char[][] board; // 2D array representing the board layout
+    private Location pacman; // current location of pacman
+    private final int size; // size of the board (assuming square board)
+    private int score; // player's score
+    private int level;
+    private final Ghost[] ghosts;
+    private boolean gameOver;
 
 
     public Board(int size, Location pacmanLocation) { 
@@ -27,6 +28,7 @@ public class Board {
     public Board(int size, Location pacmanLocation, long seed, int level) {
         Random random = new Random(seed);
         score = 0;
+        gameOver = false;
         this.size = size;
         this.board = new char[size][size];
         this.pelletCount = 0;
@@ -68,7 +70,16 @@ public class Board {
             }
         }
 
-        // ensure pacman start cell is free and not counted as a pellet
+        // Place pacman on the board at the specified starting location
+        ghosts = new Ghost[level];
+        for (int i = 0; i<level; i++) {
+            Location ghostLocation = Location.RandomLocation(random, size);
+            if (ghostLocation.equals(pacmanLocation) || !this.isEmpty(ghostLocation)) {
+                i--;
+                continue;
+            }
+            ghosts[i] = new Ghost(ghostLocation, this);
+        }
         this.pacman = pacmanLocation;
         int py = pacman.getY();
         int px = pacman.getX();
@@ -81,27 +92,54 @@ public class Board {
     public String drawBoard() {
         // generate the boards ascii representation
         StringBuilder sb = new StringBuilder();
-        for (char[] chars : board) {
+        char[][] tempBoard = board.clone();
+        Location currentLocation = new Location(0, 0);
+        for (char[] chars : tempBoard) {
             for (char aChar : chars) {
+                boolean end = false;
+                for (Ghost ghost : ghosts) {
+                    if (currentLocation.equals(ghost.getGhostLocation())) {
+                        sb.append("\uD83D\uDC7B");
+                        end = true;
+                    }
+                }
+                if (end) {
+
+                    currentLocation = currentLocation.right();
+                    continue;
+                }
                 if (aChar != 'P') {
                     sb.append(aChar); //Append regular characters to array
                 } else {
                     sb.append("🙃"); // I can't store the emoji in the char array since this is technically a string
                 }
+                currentLocation = currentLocation.right();
             }
+            currentLocation = new Location(0, currentLocation.getY() + 1);
             sb.append('\n'); // New line after each row
         }
         return sb.toString(); // Return the complete board as a string
     }
 
+    public Location getPacman() {
+        return pacman;
+    }
+
+    public boolean isGameOver() {
+        return gameOver;
+    }
+
+    public boolean isEmpty(Location location) {
+        if (!location.withinBounds(size)) {
+            return false;
+        }
+        return board[location.getY()][location.getX()] != '#';
+    }
+    // Attempt to move Pacman in the specified direction
     public boolean move(Direction direction) {
         // tries to move pacman in the given direction returns true if successful false if the movement resulted in a collision
-        Location newLocation = switch (direction) {
-            case UP -> new Location(pacman.getX(), pacman.getY() - 1);
-            case DOWN -> new Location(pacman.getX(), pacman.getY() + 1);
-            case LEFT -> new Location(pacman.getX() - 1, pacman.getY());
-            case RIGHT -> new Location(pacman.getX() + 1, pacman.getY());
-        };
+        // if moving was successful then ghosts are also moved
+        Location newLocation = this.pacman.move(direction);
         // perform some bounds checking and return early if we're out of bounds
         if (!newLocation.withinBounds(size) || board[newLocation.getY()][newLocation.getX()] == '#') return false;
         // if we land on a pellet increase the score   
@@ -113,12 +151,19 @@ public class Board {
         if  (board[newLocation.getY()][newLocation.getX()] == 'l') {
             score += 5;// to replace with power pellet logic
         }
-        board[pacman.getY()][pacman.getX()] = ' '; // clear the old pacman location
-        pacman = newLocation;
-        board[pacman.getY()][pacman.getX()] = 'P'; // place pacman in the new location
+        board[pacman.getY()][pacman.getX()] = ' '; // Clear old pacman position
+        pacman = newLocation; // Update pacman's location
+        board[pacman.getY()][pacman.getX()] = 'P';
+        for (Ghost ghost : ghosts) { // calculate the ghost's moves
+            ghost.move();
+            if (ghost.getGhostLocation().equals(pacman)) {
+                gameOver = true;
+            }
+        }
         return true;
     }
-    public int getScore() { // returns the current score
+
+    public int getScore() { // method to get the current score
         return score;
         
     }
