@@ -31,6 +31,10 @@ public class Main {
                 // If the move is invalid, notify the user
                 System.out.println("You cannot move there.");
             }
+            if (board.isGameOver()) {
+                System.out.println("Game over.");
+                break;
+            }
         }
     }
 }
