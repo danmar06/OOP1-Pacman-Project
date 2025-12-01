@@ -22,6 +22,7 @@ public class Main extends JFrame {
     private Board board;
     private Image ghostImage;
     private JPanel currentPanel;
+    private int totalScore = 0;
 
 
     public Main() {
@@ -34,7 +35,51 @@ public class Main extends JFrame {
         setVisible(true);
     }
 
+    private void showGameOver() {
+        if (currentPanel != null) {
+            remove(currentPanel);
+        }
+
+        removeKeyListener(getKeyListeners().length > 0 ? getKeyListeners()[0] : null);
+
+        JPanel menuPanel = new JPanel();
+        menuPanel.setBackground(Color.BLACK);
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
+        menuPanel.add(Box.createVerticalGlue());
+
+        JLabel titleLabel = new JLabel("GAME OVER");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 40));
+        titleLabel.setForeground(Color.YELLOW);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        menuPanel.add(titleLabel);
+
+        menuPanel.add(Box.createVerticalStrut(50));
+
+        JButton newGameButton = new JButton("New Game");
+        newGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        newGameButton.setPreferredSize(new Dimension(150, 50));
+        newGameButton.setFont(new Font("Arial", Font.PLAIN, 20));
+        newGameButton.addActionListener(e -> startNewGame(1));
+        menuPanel.add(newGameButton);
+
+        menuPanel.add(Box.createVerticalStrut(20));
+
+        JButton quitButton = new JButton("Quit");
+        quitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        quitButton.setPreferredSize(new Dimension(150, 50));
+        quitButton.setFont(new Font("Arial", Font.PLAIN, 20));
+        quitButton.addActionListener(e -> System.exit(0));
+        menuPanel.add(quitButton);
+        menuPanel.add(Box.createVerticalGlue());
+
+        currentPanel = menuPanel;
+        add(menuPanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+    }
+
     private void showMainMenu() {
+        totalScore = 0;
         // Clear current panel if exists
         if (currentPanel != null) {
             remove(currentPanel);
@@ -58,7 +103,7 @@ public class Main extends JFrame {
         newGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         newGameButton.setPreferredSize(new Dimension(150, 50));
         newGameButton.setFont(new Font("Arial", Font.PLAIN, 20));
-        newGameButton.addActionListener(e -> startNewGame());
+        newGameButton.addActionListener(e -> startNewGame(1));
         menuPanel.add(newGameButton);
 
         menuPanel.add(Box.createVerticalStrut(20));
@@ -79,7 +124,7 @@ public class Main extends JFrame {
     }
 
 
-    private void startNewGame() {
+    private void startNewGame(int level) {
         if (currentPanel != null) {
             remove(currentPanel);
         }
@@ -88,11 +133,11 @@ public class Main extends JFrame {
         } catch (IOException e) {
             ghostImage = null;
         }
-        setTitle("Game Interface Demo");
+        setTitle("Pacman");
         setSize(500, 597);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        board = new Board(10, new Location(1, 0), System.currentTimeMillis(), 1);
+        board = new Board(10, new Location(0, 0), System.currentTimeMillis(), level);
         // Initialize game elements
         obstacles = board.getObstacles();
         pellets = board.getPellets();
@@ -124,17 +169,18 @@ public class Main extends JFrame {
                     return;
                 }
                 board.move(direction);
-                
-                // Check if game is over
-                if (board.isGameOver()) {
-                    showGameOver();
-                    return;
-                }
-                
                 pellets = board.getPellets();
                 ghosts = board.getGhosts();
                 powerups = board.getPowerups();
-                scoreLabel.setText("Score: " + board.getScore());
+                scoreLabel.setText("Score: " + (totalScore + board.getScore()));
+                if (board.getPelletCount() == 0) {
+                    totalScore += board.getScore();
+                    startNewGame(level + 1);
+                }
+
+                if (board.isGameOver()) {
+                    showGameOver();
+                }
                 gamePanel.repaint();
             }
             @Override
@@ -213,7 +259,7 @@ public class Main extends JFrame {
 
     private JPanel createScorePanel() {
         JPanel scorePanel = new JPanel();
-        scoreLabel = new JLabel("Score: " + board.getScore());
+        scoreLabel = new JLabel("Score: " + totalScore);
         scorePanel.add(scoreLabel);
         scorePanel.setBackground(Color.GRAY);
         return scorePanel;
@@ -224,62 +270,11 @@ public class Main extends JFrame {
         JButton menuButton = new JButton("Menu");
         JButton resetButton = new JButton("Reset");
         menuButton.addActionListener(_ -> showMainMenu());
-        resetButton.addActionListener(_ -> startNewGame());
+        resetButton.addActionListener(_ -> startNewGame(1));
         controlPanel.add(menuButton);
         controlPanel.add(resetButton);
         controlPanel.setBackground(Color.LIGHT_GRAY);
         return controlPanel;
-    }
-
-    private void showGameOver() {
-        if (currentPanel != null) {
-            remove(currentPanel);
-        }
-        removeKeyListener(getKeyListeners().length > 0 ? getKeyListeners()[0] : null);
-
-        JPanel gameOverPanel = new JPanel();
-        gameOverPanel.setBackground(Color.BLACK);
-        gameOverPanel.setLayout(new BoxLayout(gameOverPanel, BoxLayout.Y_AXIS));
-        gameOverPanel.add(Box.createVerticalGlue());
-
-        JLabel gameOverLabel = new JLabel("GAME OVER!");
-        gameOverLabel.setFont(new Font("Arial", Font.BOLD, 50));
-        gameOverLabel.setForeground(Color.RED);
-        gameOverLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        gameOverPanel.add(gameOverLabel);
-
-        gameOverPanel.add(Box.createVerticalStrut(20));
-
-        JLabel scoreDisplayLabel = new JLabel("Final Score: " + board.getScore());
-        scoreDisplayLabel.setFont(new Font("Arial", Font.PLAIN, 30));
-        scoreDisplayLabel.setForeground(Color.YELLOW);
-        scoreDisplayLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        gameOverPanel.add(scoreDisplayLabel);
-
-        gameOverPanel.add(Box.createVerticalStrut(50));
-
-        JButton retryButton = new JButton("Try Again");
-        retryButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        retryButton.setPreferredSize(new Dimension(150, 50));
-        retryButton.setFont(new Font("Arial", Font.PLAIN, 20));
-        retryButton.addActionListener(e -> startNewGame());
-        gameOverPanel.add(retryButton);
-
-        gameOverPanel.add(Box.createVerticalStrut(20));
-
-        JButton menuButton = new JButton("Main Menu");
-        menuButton.setAlignmentX(Component.CENTER_ALIGNMENT);
-        menuButton.setPreferredSize(new Dimension(150, 50));
-        menuButton.setFont(new Font("Arial", Font.PLAIN, 20));
-        menuButton.addActionListener(e -> showMainMenu());
-        gameOverPanel.add(menuButton);
-
-        gameOverPanel.add(Box.createVerticalGlue());
-
-        currentPanel = gameOverPanel;
-        add(gameOverPanel, BorderLayout.CENTER);
-        revalidate();
-        repaint();
     }
 
     public static void main(String[] args) {
