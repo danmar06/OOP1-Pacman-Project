@@ -27,12 +27,66 @@ public class GameInterfaceDemo extends JFrame {
     private ArrayList<Point> pellets;
     private JPanel gamePanel;
     private JLabel scoreLabel;
+    private JPanel currentPanel;
 
     public GameInterfaceDemo() {
-        setTitle("Game Interface Demo");
+        setTitle("Pac-Man Game");
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+
+        showMainMenu();
+        setVisible(true);
+    }
+
+    private void showMainMenu() {
+        // Clear current panel if exists
+        if (currentPanel != null) {
+            remove(currentPanel);
+        }
+        removeKeyListener(getKeyListeners().length > 0 ? getKeyListeners()[0] : null);
+
+        JPanel menuPanel = new JPanel();
+        menuPanel.setBackground(Color.BLACK);
+        menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.Y_AXIS));
+        menuPanel.add(Box.createVerticalGlue());
+
+        JLabel titleLabel = new JLabel("PAC-MAN GAME");
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 40));
+        titleLabel.setForeground(Color.YELLOW);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        menuPanel.add(titleLabel);
+
+        menuPanel.add(Box.createVerticalStrut(50));
+
+        JButton newGameButton = new JButton("New Game");
+        newGameButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        newGameButton.setPreferredSize(new Dimension(150, 50));
+        newGameButton.setFont(new Font("Arial", Font.PLAIN, 20));
+        newGameButton.addActionListener(e -> startNewGame());
+        menuPanel.add(newGameButton);
+
+        menuPanel.add(Box.createVerticalStrut(20));
+
+        JButton quitButton = new JButton("Quit");
+        quitButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        quitButton.setPreferredSize(new Dimension(150, 50));
+        quitButton.setFont(new Font("Arial", Font.PLAIN, 20));
+        quitButton.addActionListener(e -> System.exit(0));
+        menuPanel.add(quitButton);
+
+        menuPanel.add(Box.createVerticalGlue());
+
+        currentPanel = menuPanel;
+        add(menuPanel, BorderLayout.CENTER);
+        revalidate();
+        repaint();
+    }
+
+    private void startNewGame() {
+        if (currentPanel != null) {
+            remove(currentPanel);
+        }
 
         // Initialize game elements
         pacMan = new PacMan(100, 100);
@@ -47,6 +101,13 @@ public class GameInterfaceDemo extends JFrame {
         add(gamePanel, BorderLayout.CENTER);
         add(createScorePanel(), BorderLayout.NORTH);
         add(createControlPanel(), BorderLayout.SOUTH);
+
+        currentPanel = gamePanel;
+
+        // Remove old key listeners
+        for (KeyListener kl : getKeyListeners()) {
+            removeKeyListener(kl);
+        }
 
         addKeyListener(new KeyListener() {
             @Override
@@ -64,7 +125,9 @@ public class GameInterfaceDemo extends JFrame {
             @Override
             public void keyTyped(KeyEvent e) {}
         });
-        setVisible(true);
+
+        revalidate();
+        repaint();
         requestFocusInWindow();
     }
 
@@ -117,11 +180,11 @@ public class GameInterfaceDemo extends JFrame {
 
     private JPanel createControlPanel() {
         JPanel controlPanel = new JPanel();
-        JButton startButton = new JButton("Start");
-        JButton pauseButton = new JButton("Pause");
+        JButton menuButton = new JButton("Menu");
         JButton resetButton = new JButton("Reset");
-        controlPanel.add(startButton);
-        controlPanel.add(pauseButton);
+        menuButton.addActionListener(e -> showMainMenu());
+        resetButton.addActionListener(e -> startNewGame());
+        controlPanel.add(menuButton);
         controlPanel.add(resetButton);
         controlPanel.setBackground(Color.LIGHT_GRAY);
         return controlPanel;
