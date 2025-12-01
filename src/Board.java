@@ -1,7 +1,4 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Random; // Import Random class for generating random numbers
+import java.util.Random;
 
 public class Board {  
     private int pelletCount; // Number of pellets on the board
